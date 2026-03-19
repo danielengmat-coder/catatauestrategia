@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Estratégico - Catatau Veículos</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chosen Palette: Corporate Slate & Crimson Alert (Background: Slate 50, Accents: Slate 800, Blue 600 for progress, Red 500 for alerts, Amber 500 for warnings) -->
+    <!-- Application Structure Plan: The SPA is structured as an executive dashboard. It flows logically from High-Level Context (Header & Alerts) -> Data Evidence (Interactive Charts) -> Progress Tracking (Checklist) -> Strategic Roadmap (Tabbed Action Plan) -> Tactical Execution (Filterable Task Board). This structure was chosen to move the user from understanding the 'Problem' to internalizing the 'Data', and finally executing the 'Solution'. -->
+    <!-- Visualization & Content Choices: 
+         - KPIs/Alerts -> Goal: Inform -> UI Cards -> Interaction: Hover effects -> Justifies immediate attention on critical issues.
+         - Performance Data -> Goal: Compare/Change -> Dual-axis Line/Bar Charts (Chart.js) -> Interaction: Tooltips -> Clearly shows the inverse correlation between ad spend/leads and actual sales/CPA.
+         - Action Plan -> Goal: Organize -> Tabbed Interface -> Interaction: Click to switch phases -> Prevents information overload, grouping tasks chronologically.
+         - Responsibilities -> Goal: Action -> Filterable List -> Interaction: Dropdown filter -> Allows each stakeholder to see exactly what they need to do today.
+         Library: Chart.js for data. Vanilla JS for tabs/filters. HTML/Tailwind for structure. NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b; /* Zinc 950 - Preto Profundo Premium */
+            color: #f4f4f5; /* Zinc 100 - Branco suave para não ofuscar */
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+
+        .glass-card {
+            background: #18181b; /* Zinc 900 - Fundo de cartão sólido e elegante */
+            border: 1px solid #27272a; /* Zinc 800 - Borda super sutil */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+            border-radius: 0.5rem; /* Bordas um pouco menos arredondadas = mais seriedade */
+        }
+
+        .tab-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .tab-active {
+            border-bottom-color: #3b82f6; /* Blue 500 */
+            color: #f4f4f5; /* Texto branco no tab ativo */
+            font-weight: 600;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46; 
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen pb-12 bg-zinc-950 text-zinc-200">
+
+    <header class="bg-black border-b border-zinc-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">🚗 Catatau Veículos</h1>
+                <p class="text-sm text-zinc-400 mt-1">Dashboard Executivo & Plano de Ação Estratégico</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex gap-4 text-sm">
+                <div class="bg-zinc-900 px-3 py-1 rounded-md border border-zinc-800">
+                    <span class="text-zinc-400">CS:</span> <span class="font-medium text-blue-400">Mariana</span>
+                </div>
+                <div class="bg-zinc-900 px-3 py-1 rounded-md border border-zinc-800">
+                    <span class="text-zinc-400">Data:</span> <span class="font-medium">19/03/2026</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <section id="cenario-alertas" class="fade-in">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-white border-b border-zinc-800 pb-2">1. Análise de Cenário & Alertas Críticos</h2>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">
+                    Esta seção apresenta um resumo imediato da saúde operacional da concessionária. A Catatau Veículos enfrenta um momento crítico: uma transição cultural para o digital não absorvida pela equipe veterana, resultando em desperdício de alto volume de leads (~1.500/mês). Os alertas abaixo destacam os gargalos que exigem ação imediata.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-5 border-l-4 border-l-red-600 hover:-translate-y-1 transition-transform">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-zinc-100">CPA Triplicado 🚨</h3>
+                        <span class="text-2xl">💸</span>
+                    </div>
+                    <p class="text-sm text-zinc-400">O custo para adquirir um cliente passou de ~R$ 200 (Dez/25) para ~R$ 750 (Mar/26). O investimento em tráfego está gerando leads que não convertem.</p>
+                </div>
+
+                <div class="glass-card p-5 border-l-4 border-l-amber-500 hover:-translate-y-1 transition-transform">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-zinc-100">Estoque em Queda 📉</h3>
+                        <span class="text-2xl">🚘</span>
+                    </div>
+                    <p class="text-sm text-zinc-400">Volume caiu quase pela metade (de 37 para 20 veículos). A atual ambição de 40-50 vendas/mês é matematicamente insustentável sem reposição.</p>
+                </div>
+
+                <div class="glass-card p-5 border-l-4 border-l-orange-500 hover:-translate-y-1 transition-transform">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-zinc-100">Gargalo de Gestão ⏳</h3>
+                        <span class="text-2xl">👥</span>
+                    </div>
+                    <p class="text-sm text-zinc-400">Falta de engajamento operacional do Gerente (Ronaldo). Acordos feitos com o proprietário não estão descendo para a linha de frente da equipe.</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex items-start gap-3">
+                <span class="text-xl">🎯</span>
+                <div>
+                    <h4 class="font-semibold text-blue-400">Meta Principal (Estrela Guia)</h4>
+                    <p class="text-sm text-zinc-300">Estabilizar vendas, engajar a equipe no digital e atingir a meta ideal da loja: <strong class="text-white">R$ 360.000,00 de resultado global (R$ 60k por vendedor).</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance-dados" class="fade-in" style="animation-delay: 0.1s;">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-white border-b border-zinc-800 pb-2">2. Dashboard de Performance (Dez/25 - Mar/26)</h2>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">
+                    Visualize o impacto do desalinhamento comercial. Os gráficos interativos abaixo correlacionam as vendas, o estoque, o investimento em marketing e a deterioração da taxa de conversão ao longo dos últimos 4 meses. Interaja com as legendas para isolar métricas específicas.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card p-4">
+                    <h3 class="text-center font-semibold text-zinc-200 mb-4">Volume de Vendas vs. Estoque</h3>
+                    <div class="chart-container">
+                        <canvas id="vendasEstoqueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4">
+                    <h3 class="text-center font-semibold text-zinc-200 mb-4">Custo de Aquisição (CPA) vs. Conversão</h3>
+                    <div class="chart-container">
+                        <canvas id="cpaConversaoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 glass-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-zinc-800 text-sm">
+                        <thead class="bg-zinc-900/50">
+                            <tr>
+                                <th class="px-6 py-3 text-left font-medium text-zinc-400 uppercase tracking-wider">Mês</th>
+                                <th class="px-6 py-3 text-center font-medium text-zinc-400 uppercase tracking-wider">Carros Vendidos</th>
+                                <th class="px-6 py-3 text-center font-medium text-zinc-400 uppercase tracking-wider">Estoque</th>
+                                <th class="px-6 py-3 text-center font-medium text-zinc-400 uppercase tracking-wider">Investimento</th>
+                                <th class="px-6 py-3 text-center font-medium text-zinc-400 uppercase tracking-wider">CPA (R$)</th>
+                                <th class="px-6 py-3 text-center font-medium text-zinc-400 uppercase tracking-wider">Conversão (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-zinc-900 divide-y divide-zinc-800" id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="onboarding-progresso" class="fade-in" style="animation-delay: 0.2s;">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-white border-b border-zinc-800 pb-2">3. Progresso do Onboarding (G30)</h2>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">
+                    Acompanhamento das etapas iniciais de implantação do Programa G30. Serve para confirmar que a infraestrutura técnica e administrativa foi concluída, permitindo o avanço para as estratégias de vendas.
+                </p>
+            </div>
+
+            <div class="glass-card p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-green-500 text-xl">✅</span>
+                        <span class="text-sm font-medium text-zinc-200">Contrato Assinado & Pgto Confirmado</span>
+                    </div>
+                    <p class="text-sm text-slate-600">O custo para adquirir um cliente passou de ~R$ 200 (Dez/25) para ~R$ 750 (Mar/26). O investimento em tráfego está gerando leads que não convertem.</p>
+                </div>
+
+                <div class="glass-card p-5 border-l-4 border-l-amber-500 hover:-translate-y-1 transition-transform">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-slate-700">Estoque em Queda 📉</h3>
+                        <span class="text-2xl">🚘</span>
+                    </div>
+                    <p class="text-sm text-slate-600">Volume caiu quase pela metade (de 37 para 20 veículos). A atual ambição de 40-50 vendas/mês é matematicamente insustentável sem reposição.</p>
+                </div>
+
+                <div class="glass-card p-5 border-l-4 border-l-orange-500 hover:-translate-y-1 transition-transform">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-slate-700">Gargalo de Gestão ⏳</h3>
+                        <span class="text-2xl">👥</span>
+                    </div>
+                    <p class="text-sm text-slate-600">Falta de engajamento operacional do Gerente (Ronaldo). Acordos feitos com o proprietário não estão descendo para a linha de frente da equipe.</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+                <span class="text-xl">🎯</span>
+                <div>
+                    <h4 class="font-semibold text-blue-900">Meta Principal (Estrela Guia)</h4>
+                    <p class="text-sm text-blue-800">Estabilizar vendas, engajar a equipe no digital e atingir a meta ideal da loja: <strong>R$ 360.000,00 de resultado global (R$ 60k por vendedor).</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance-dados" class="fade-in" style="animation-delay: 0.1s;">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2">2. Dashboard de Performance (Dez/25 - Mar/26)</h2>
+                <p class="text-slate-600 mt-2 text-sm leading-relaxed">
+                    Visualize o impacto do desalinhamento comercial. Os gráficos interativos abaixo correlacionam as vendas, o estoque, o investimento em marketing e a deterioração da taxa de conversão ao longo dos últimos 4 meses. Interaja com as legendas para isolar métricas específicas.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card p-4">
+                    <h3 class="text-center font-semibold text-slate-700 mb-4">Volume de Vendas vs. Estoque</h3>
+                    <div class="chart-container">
+                        <canvas id="vendasEstoqueChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4">
+                    <h3 class="text-center font-semibold text-slate-700 mb-4">Custo de Aquisição (CPA) vs. Conversão</h3>
+                    <div class="chart-container">
+                        <canvas id="cpaConversaoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 glass-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left font-medium text-slate-500 uppercase tracking-wider">Mês</th>
+                                <th class="px-6 py-3 text-center font-medium text-slate-500 uppercase tracking-wider">Carros Vendidos</th>
+                                <th class="px-6 py-3 text-center font-medium text-slate-500 uppercase tracking-wider">Estoque</th>
+                                <th class="px-6 py-3 text-center font-medium text-slate-500 uppercase tracking-wider">Investimento</th>
+                                <th class="px-6 py-3 text-center font-medium text-slate-500 uppercase tracking-wider">CPA (R$)</th>
+                                <th class="px-6 py-3 text-center font-medium text-slate-500 uppercase tracking-wider">Conversão (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200" id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="onboarding-progresso" class="fade-in" style="animation-delay: 0.2s;">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-slate-800 border-b border-slate-200 pb-2">3. Progresso do Onboarding (G30)</h2>
+                <p class="text-slate-600 mt-2 text-sm leading-relaxed">
+                    Acompanhamento das etapas iniciais de implantação do Programa G30. Serve para confirmar que a infraestrutura técnica e administrativa foi concluída, permitindo o avanço para as estratégias de vendas.
+                </p>
+            </div>
+
+            <div class="glass-card p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-green-500 text-xl">✅</span>
+                        <span class="text-sm font-medium text-zinc-200">Acessos e Materiais Enviados</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                    <span class="text-sm text-zinc-400">Progresso da Fase de Implantação:</span>
+                    <span class="text-sm font-bold text-green-500">100% Concluído</span>
+                </div>
+                <div class="w-full bg-zinc-800 rounded-full h-2.5 mt-2">
+                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 100%"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="plano-acao" class="fade-in" style="animation-delay: 0.3s;">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold text-white border-b border-zinc-800 pb-2">4. Rota para a Meta (Plano de Ação)</h2>
+                <p class="text-zinc-400 mt-2 text-sm leading-relaxed">
+                    O caminho de recuperação e crescimento foi dividido em três fases lógicas. Utilize as abas abaixo para explorar as estratégias de curto prazo (Operação Resgate), médio prazo (Nivelamento) e longo prazo (Escala).
+                </p>
+            </div>
+
+            <div class="glass-card overflow-hidden">
+                <div class="flex border-b border-zinc-800 overflow-x-auto hide-scrollbar">
+                    <button class="tab-btn tab-active px-6 py-4 text-sm font-medium text-zinc-400 hover:text-white border-b-2 border-transparent focus:outline-none whitespace-nowrap" data-target="fase1">
+                        Fase 1: Resgate (7 Dias)
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-sm font-medium text-zinc-500 hover:text-white border-b-2 border-transparent focus:outline-none whitespace-nowrap" data-target="fase2">
+                        Fase 2: Nivelamento (30 Dias)
+                    </button>
+                    <button class="tab-btn px-6 py-4 text-sm font-medium text-zinc-500 hover:text-white border-b-2 border-transparent focus:outline-none whitespace-nowrap" data-target="fase3">
+                        Fase 3: Escala (60-90 Dias)
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <div id="fase1" class="tab-content block animate-[fadeIn_0.3s_ease-in-out]">
+                        <h3 class="text-lg font-bold text-white mb-2">🔥 Operação Resgate - Mega Feirão (26 a 28/03)</h3>
+                        <p class="text-sm text-zinc-400 mb-4">O Evento Crítico. Chance de gerar um "Primeiro Impacto" rápido (Quick Win) e provar o valor do método para a equipe cética.</p>
+                        <div class="bg-red-950/30 border border-red-900 rounded-md p-3 mb-4 inline-block">
+                            <span class="text-sm font-bold text-red-400">Objetivo Crítico:</span>
+                            <span class="text-sm text-red-200">Vender no mínimo 10 carros durante os 3 dias para salvar março.</span>
+                        </div>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-2 text-sm text-zinc-300">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>CS (Mariana):</strong> Cobrar retorno imediato do Ronaldo referente à ligação do dia 17/03.
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-zinc-300">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>CS (Mariana):</strong> Garantir que todos os 6 vendedores estejam no Grupo do Feirão até 20/03.
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-zinc-300">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>Cliente (Ronaldo):</strong> Organizar o time para a Live de aquecimento no dia 25/03.
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-zinc-300">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>Cliente (Ronaldo):</strong> Garantir acesso aos leads pré-aprovados do Banco C6 com scripts da plataforma.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div id="fase2" class="tab-content hidden animate-[fadeIn_0.3s_ease-in-out]">
+                        <h3 class="text-lg font-bold text-white mb-2">🏗️ Cultura e Método (Próximos 30 Dias)</h3>
+                        <p class="text-sm text-zinc-400 mb-4">Passado o Feirão, o foco é a capacitação contínua e a redução do Custo por Lead/Venda através de padronização.</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-2 text-sm text-zinc-300">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>CS (Mariana):</strong> Realizar o "Planejamento de Método MAPA" (agendado 31/03).
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-slate-700">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>CS (Mariana):</strong> Reunião de Check-in mensal (06/04) para analisar resultados e desenhar fluxo de cadência.
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-slate-700">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>Cliente (Emerson/Ronaldo):</strong> Implementar regra de 45 minutos semanais obrigatórios de treinamento na Plataforma G30.
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-slate-700">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>Cliente (Ronaldo):</strong> Usar Módulo Fábrica de Pré-Vendas para tratar os 1.500 leads mensais com indicadores, não cobrança subjetiva.
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-slate-700">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>Monitoramento:</strong> Vigiar acesso de veteranos (Sirlei, Gilson, Magno). Usar Sandro (100% digital) e Anne (nova, com resultados) como benchmarks.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div id="fase3" class="tab-content hidden animate-[fadeIn_0.3s_ease-in-out]">
+                        <h3 class="text-lg font-bold text-white mb-2">🚀 Escala e Posicionamento (60-90 Dias)</h3>
+                        <p class="text-sm text-zinc-400 mb-4">Com a equipe equalizada, a energia é direcionada para geração de demanda orgânica e estruturação robusta de estoque.</p>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-2 text-sm text-zinc-300">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>CS (Mariana):</strong> Acompanhar Marketing (Meta Setembro: "Aumentar consistentemente publicações no instagram").
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-slate-700">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>Cliente (Marketing - Igor):</strong> Criar calendário editorial com vendedores, forçando a "Cultura de Gravação" no pátio.
+                            </li>
+                            <li class="flex items-start gap-2 text-sm text-slate-700">
+                                <span class="text-blue-500 mt-0.5">🔹</span> <strong>Cliente (Emerson):</strong> Focar em estratégias de captação de veículos para recompor estoque visando 40-50 vendas/mês.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="responsabilidades" class="fade-in" style="animation-delay: 0.4s;">
+            <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-end gap-4 border-b border-zinc-800 pb-2">
+                <div>
+                    <h2 class="text-xl font-bold text-white">5. Board de Responsabilidades Imediatas</h2>
+                    <p class="text-zinc-400 mt-1 text-sm">Filtre as tarefas pendentes para hoje/amanhã por responsável para facilitar a execução e cobrança.</p>
+                </div>
+                <div class="w-full md:w-64">
+                    <label for="responsavelFilter" class="block text-xs font-medium text-zinc-400 mb-1">Filtrar por Responsável:</label>
+                    <select id="responsavelFilter" class="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="todos">Todos os Responsáveis</option>
+                        <option value="mariana">Mariana (CS)</option>
+                        <option value="ronaldo">Ronaldo (Gerente)</option>
+                        <option value="emerson">Emerson (Proprietário)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="taskBoard">
+                <div class="task-card glass-card p-4 border-l-4 border-l-blue-500 flex justify-between items-center" data-assignee="mariana">
+                    <div>
+                        <span class="text-xs font-bold text-blue-400 uppercase tracking-wide bg-blue-950/50 border border-blue-900 px-2 py-1 rounded">Mariana (CS)</span>
+                        <p class="text-sm font-medium text-white mt-2">Ligar para Ronaldo para destravar as ações do Feirão.</p>
+                    </div>
+                    <span class="text-zinc-400 text-sm flex items-center gap-1 border border-zinc-800 px-2 py-1 rounded-md bg-zinc-900">⏳ Pendente</span>
+                </div>
+
+                <div class="task-card glass-card p-4 border-l-4 border-l-blue-500 flex justify-between items-center" data-assignee="mariana">
+                    <div>
+                        <span class="text-xs font-bold text-blue-400 uppercase tracking-wide bg-blue-950/50 border border-blue-900 px-2 py-1 rounded">Mariana (CS)</span>
+                        <p class="text-sm font-medium text-white mt-2">Confirmar acesso dos novos vendedores (Rodrigo, Natalia, Adrian).</p>
+                    </div>
+                    <span class="text-zinc-400 text-sm flex items-center gap-1 border border-zinc-800 px-2 py-1 rounded-md bg-zinc-900">⏳ Pendente</span>
+                </div>
+
+                <div class="task-card glass-card p-4 border-l-4 border-l-amber-500 flex justify-between items-center" data-assignee="ronaldo">
+                    <div>
+                        <span class="text-xs font-bold text-amber-400 uppercase tracking-wide bg-amber-950/50 border border-amber-900 px-2 py-1 rounded">Ronaldo (Gerente)</span>
+                        <p class="text-sm font-medium text-white mt-2">Assistir à aula de alinhamento do Guga e repassar ao time.</p>
+                    </div>
+                    <span class="text-zinc-400 text-sm flex items-center gap-1 border border-zinc-800 px-2 py-1 rounded-md bg-zinc-900">⏳ Pendente</span>
+                </div>
+
+                <div class="task-card glass-card p-4 border-l-4 border-l-zinc-500 flex justify-between items-center" data-assignee="emerson">
+                    <div>
+                        <span class="text-xs font-bold text-zinc-300 uppercase tracking-wide bg-zinc-800 border border-zinc-700 px-2 py-1 rounded">Emerson (Dono)</span>
+                        <p class="text-sm font-medium text-white mt-2">Pressionar Ronaldo para assumir a frente operacional do treinamento.</p>
+                    </div>
+                    <span class="text-zinc-400 text-sm flex items-center gap-1 border border-zinc-800 px-2 py-1 rounded-md bg-zinc-900">⏳ Pendente</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-black border-t border-zinc-900 text-zinc-600 text-center py-6 text-sm">
+        <p>Dashboard Interativo Gerado para Catatau Veículos | Programa G30</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const rawData = [
+                { mes: 'Dez/25', vendas: 52, estoque: 37, inv: 12250.00, cpa: 235.57, conv: 3.46 },
+                { mes: 'Jan/26', vendas: 44, estoque: 24, inv: 9000.00, cpa: 204.54, conv: 2.93 },
+                { mes: 'Fev/26', vendas: 25, estoque: 21, inv: 12171.83, cpa: 486.87, conv: 1.66 },
+                { mes: 'Mar/26', vendas: 10, estoque: 20, inv: 7500.00, cpa: 750.00, conv: 0.66 }
+            ];
+
+            const tbody = document.getElementById('tableBody');
+            rawData.forEach(row => {
+                const isWarningVendas = row.vendas < 20;
+                const isWarningCpa = row.cpa > 400;
+
+                let statusVenda = row.vendas >= 50 ? '🟢' : (row.vendas >= 30 ? '🟡' : '🔴');
+                if(row.mes === 'Mar/26') statusVenda += ' 🚨';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-200">${row.mes}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${isWarningVendas ? 'text-red-400 font-bold' : 'text-zinc-300'}">${row.vendas} ${statusVenda}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-zinc-300">${row.estoque}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-zinc-300">R$ ${row.inv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${isWarningCpa ? 'text-red-400 font-bold' : 'text-zinc-300'}">R$ ${row.cpa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-zinc-300">${row.conv.toFixed(2)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#71717a'; // Zinc 500 para textos dos gráficos
+
+            const labels = rawData.map(d => d.mes);
+            
+            const ctx1 = document.getElementById('vendasEstoqueChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Carros Vendidos',
+                            data: rawData.map(d => d.vendas),
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)', /* Azul transparente */
+                            borderColor: 'rgba(59, 130, 246, 1)', /* Borda sólida */
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            order: 2
+                        },
+                        {
+                            label: 'Veículos em Estoque',
+                            data: rawData.map(d => d.estoque),
+                            type: 'line',
+                            borderColor: '#f59e0b', 
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)', /* Fundo preenchido subtil */
+                            borderWidth: 2,
+                            fill: true, /* Efeito de volume */
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#18181b', /* Fundo igual ao cartão */
+                            pointBorderColor: '#f59e0b', /* Borda colorida */
+                            pointBorderWidth: 2,
+                            tension: 0.3,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: 'rgba(24, 24, 27, 0.95)', // Zinc 900
+                            borderColor: '#3f3f46', // Zinc 700
+                            borderWidth: 1,
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 6,
+                            displayColors: true,
+                            boxPadding: 4
+                        },
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: {size: 12} } }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: 'rgba(63, 63, 70, 0.3)', borderDash: [5, 5], drawBorder: false }, // Zinc 700 subtil e tracejado
+                            title: { display: true, text: 'Unidades', color: '#a1a1aa' },
+                            border: { display: false }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('cpaConversaoChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Custo por Venda (CPA) - R$',
+                            data: rawData.map(d => d.cpa),
+                            borderColor: '#ef4444', 
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)', /* Fundo vermelho translúcido */
+                            borderWidth: 2,
+                            fill: true, /* Efeito de alerta de volume */
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#18181b',
+                            pointBorderColor: '#ef4444',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Taxa de Conversão (%)',
+                            data: rawData.map(d => d.conv),
+                            borderColor: '#10b981', 
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)', /* Fundo verde muito subtil */
+                            borderWidth: 2,
+                            borderDash: [5, 5], /* Mantém tracejado para diferenciar */
+                            fill: true,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#18181b',
+                            pointBorderColor: '#10b981',
+                            pointBorderWidth: 2,
+                            yAxisID: 'y1',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: 'rgba(24, 24, 27, 0.95)', // Zinc 900
+                            borderColor: '#3f3f46', // Zinc 700
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 6,
+                            boxPadding: 4,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.datasetIndex === 0) {
+                                        label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                    } else {
+                                        label += context.parsed.y + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: {size: 12} } }
+                    },
+                    scales: {
+                        y: { 
+                            type: 'linear', display: true, position: 'left', beginAtZero: true,
+                            grid: { color: 'rgba(63, 63, 70, 0.3)', borderDash: [5, 5], drawBorder: false }, // Zinc 700 subtil e tracejado
+                            title: { display: true, text: 'CPA (R$)', color: '#a1a1aa' },
+                            border: { display: false }
+                        },
+                        y1: {
+                            type: 'linear', display: true, position: 'right', beginAtZero: true,
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'Conversão (%)', color: '#a1a1aa' },
+                            border: { display: false }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => {
+                        b.classList.remove('tab-active');
+                        b.classList.add('text-zinc-500'); // Zinc 500 no inativo
+                    });
+                    
+                    tabContents.forEach(c => {
+                        c.classList.add('hidden');
+                        c.classList.remove('block');
+                    });
+
+                    btn.classList.add('tab-active');
+                    btn.classList.remove('text-zinc-500');
+                    
+                    const targetId = btn.getAttribute('data-target');
+                    const targetContent = document.getElementById(targetId);
+                    targetContent.classList.remove('hidden');
+                    targetContent.classList.add('block');
+                });
+            });
+
+            const filterSelect = document.getElementById('responsavelFilter');
+            const tasks = document.querySelectorAll('.task-card');
+
+            filterSelect.addEventListener('change', (e) => {
+                const selectedValue = e.target.value;
+                
+                tasks.forEach(task => {
+                    const assignee = task.getAttribute('data-assignee');
+                    
+                    if (selectedValue === 'todos' || selectedValue === assignee) {
+                        task.style.display = 'flex';
+                        task.classList.add('fade-in');
+                        setTimeout(() => task.classList.remove('fade-in'), 300);
+                    } else {
+                        task.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
